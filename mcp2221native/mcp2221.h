@@ -1,5 +1,5 @@
 #ifndef _MCP2221_H_
-#define _McP2221_H_
+#define _MCP2221_H_
 
 #ifdef __cplusplus
 extern "C" {
