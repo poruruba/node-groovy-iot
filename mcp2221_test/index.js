@@ -214,7 +214,7 @@ async function test(){
 	
 	Grove_LED_Bar_begin(1, 0, 0, 10);
 	
-	await Grove_LED_Bar_setBits(0x0ff);
+	await Grove_LED_Bar_setBits(0x3ff);
 	
 	await Grove_LED_Bar_toggleLed(5);
 
