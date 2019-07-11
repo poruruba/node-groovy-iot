@@ -14,9 +14,10 @@
 #include <termios.h>
 #include <string.h>
 
+static unsigned char serial_port = 0;
 static mcp2221_t* myDev;
 
-long MCP2221_initialize(void){
+long MCP2221_initialize(unsigned char sport){
 	mcp2221_init();
 	int count = mcp2221_find(MCP2221_DEFAULT_VID, MCP2221_DEFAULT_PID, NULL, NULL, NULL);
 	if( count < 1 )
@@ -26,6 +27,8 @@ long MCP2221_initialize(void){
 	if(!myDev)
 		return -1;
 
+	serial_port = sport;
+	
 	return 0;
 }
 
@@ -63,13 +66,13 @@ void Wire_beginTransmission(unsigned char address){
 	i2c_count = 0;
 }
 
-long Wire_write_byte(unsigned char value){
+int Wire_write_byte(unsigned char value){
 	i2c_buffer[i2c_count++] = value;
 	
 	return 1;
 }
 
-long Wire_write_str(const char *p_str){
+int Wire_write_str(const char *p_str){
 	unsigned char len = strlen(p_str);
 	if( (i2c_count + len) > sizeof(i2c_buffer) )
 		return -1;
@@ -80,9 +83,8 @@ long Wire_write_str(const char *p_str){
 	return len;
 }
 
-
-long Wire_write_array(const unsigned char *p_data, unsigned char length){
-	if( (i2c_count + length) > sizeof(i2c_buffer) )
+int Wire_write_array(const unsigned char *p_data, int length){
+	if( ((unsigned long)(i2c_count + length)) > sizeof(i2c_buffer) )
 		return -1;
 
 	memmove(&i2c_buffer[i2c_count], p_data, length);
@@ -105,7 +107,7 @@ void Wire_endTransmission(void){
 	}
 }
 
-long Wire_requestFrom(unsigned char address, unsigned char count){
+int Wire_requestFrom(unsigned char address, int count){
 	mcp2221_error ret;
 	
 	ret = mcp2221_i2cRead(myDev, address, count, MCP2221_I2CRW_NORMAL);
@@ -117,7 +119,7 @@ long Wire_requestFrom(unsigned char address, unsigned char count){
 	return count;
 }
 
-unsigned char Wire_available(void){
+int Wire_available(void){
 	return i2c_count;
 }
 
@@ -205,10 +207,12 @@ unsigned char digitalRead(unsigned char pin){
 static int g_fd = -1;
 
 long Serial_begin(unsigned long speed){
-	char port_name[] = "/dev/ttyACM0";
+	char port_name[14];
 	int res;
     struct termios termios_attr;
 	speed_t spd;
+	
+	sprintf(port_name, "/dev/ttyACM%d", serial_port);
 	
 	if( speed == 4800 )
 		spd = B4800;
@@ -336,4 +340,3 @@ int Serial_println(const char *data){
 	
 	return len;
 }
-

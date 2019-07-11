@@ -5,17 +5,17 @@
 extern "C" {
 #endif // __cplusplus
 
-long MCP2221_initialize(void);
+long MCP2221_initialize(unsigned char sport);
 
 long Wire_initialize(void);
 long Wire_dispose(void);
 void Wire_beginTransmission(unsigned char address);
-long Wire_write_byte(unsigned char value);
-long Wire_write_str(const char *p_str);
-long Wire_write_array(const unsigned char *p_data, unsigned char length);
+int Wire_write_byte(unsigned char value);
+int Wire_write_str(const char *p_str);
+int Wire_write_array(const unsigned char *p_data, int length);
 void Wire_endTransmission(void);
-long Wire_requestFrom(unsigned char address, unsigned char count);
-unsigned char Wire_available(void);
+int Wire_requestFrom(unsigned char address, int count);
+int Wire_available(void);
 unsigned char Wire_read(void);
 
 #define HIGH	1

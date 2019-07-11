@@ -10,13 +10,15 @@ namespace mcp2221native {
 		v8::Isolate* isolate = args.GetIsolate();
 		long ret;
 
-		if( args.Length() != 0 )
+		if( args.Length() != 1 || !args[0]->IsNumber())
 		{
 			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_initialize")));
 			return;
 		}
 
-		ret = MCP2221_initialize();
+		unsigned char sport = (unsigned char)args[0]->Uint32Value();
+
+		ret = MCP2221_initialize(sport);
 		if (ret != 0)
 		{
 			isolate->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(isolate, "MCP2221_initialize")));
@@ -104,7 +106,7 @@ namespace mcp2221native {
 			const char *p_str = ToCString(v8::String::Utf8Value(args[0]));
 			ret = Wire_write_str(p_str);
 		}else if( args.Length() == 2 && args[0]->IsArray() && args[1]->IsNumber() ){
-			unsigned char length = (unsigned char)args[1]->Uint32Value();
+			int length = args[1]->Uint32Value();
 			input = v8::Local<v8::Array>::Cast(args[0]);
 			unsigned char data[255];
 			ret = ToByteArray(input, 0, length, data);
@@ -149,7 +151,7 @@ namespace mcp2221native {
 		}
 
 		unsigned char address = (unsigned char)args[0]->Uint32Value();
-		unsigned char count = (unsigned char)args[1]->Uint32Value();
+		int count = args[1]->Uint32Value();
 
 		ret = Wire_requestFrom(address, count);
 
@@ -383,7 +385,7 @@ namespace mcp2221native {
 			const char *p_str = ToCString(v8::String::Utf8Value(args[0]));
 			ret = Serial_write_str(p_str);
 		}else if( args.Length() == 2 && args[0]->IsArray() && args[1]->IsNumber() ){
-			unsigned char length = (unsigned char)args[1]->Uint32Value();
+			int length = args[1]->Uint32Value();
 			input = v8::Local<v8::Array>::Cast(args[0]);
 			unsigned char data[255];
 			ret = ToByteArray(input, 0, length, data);
