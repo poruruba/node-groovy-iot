@@ -206,7 +206,7 @@ function wait_async(timeout){
 }
 
 async function test(){
-	var ret = mcp2221.initialize();
+	var ret = mcp2221.initialize(0);
 	console.log(ret);
 
 	ret = mcp2221.GPIO_initialize();
@@ -221,7 +221,7 @@ async function test(){
 	ret = mcp2221.Serial_begin(115200);
 	console.log(ret);
 
-	ret = mcp2221.Serial_println('Hello World\n');
+	ret = mcp2221.Serial_println('Hello World');
 	console.log(ret);
 
 }
