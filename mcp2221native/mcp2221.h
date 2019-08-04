@@ -5,7 +5,7 @@
 extern "C" {
 #endif // __cplusplus
 
-long MCP2221_initialize(unsigned char sport);
+long MCP2221_initialize(void);
 
 long Wire_initialize(void);
 long Wire_dispose(void);
@@ -25,11 +25,20 @@ unsigned char Wire_read(void);
 #define OUTPUT			1
 #define INPUT_PULLUP	2
 
+#define DEFAULT		0
+
 long GPIO_initialize(void);
 void pinMode(unsigned char pin, unsigned char mode);
 void digitalWrite(unsigned char pin, unsigned char value);
 unsigned char digitalRead(unsigned char pin);
 
+unsigned short analogRead(unsigned char pin);
+void analogWrite(unsigned char pin, unsigned short value);
+void analogReference(unsigned char type);
+void analogReadResolution(unsigned char bits);
+void analogWriteResolution(unsigned char bits);
+
+void Serial_initialize(unsigned char sport);
 long Serial_begin(unsigned long speed);
 void Serial_end(void);
 int Serial_available(void);
@@ -38,7 +47,7 @@ int Serial_peek(void);
 void Serial_flush(void);
 int Serial_write_byte(unsigned char val);
 int Serial_write_str(const char *p_str);
-int Serial_write_array(const unsigned char *p_str, int len);
+int Serial_write_array(const unsigned char *p_data, int len);
 int Serial_print(const char *data);
 int Serial_println(const char *data);
 

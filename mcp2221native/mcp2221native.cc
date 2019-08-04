@@ -10,15 +10,13 @@ namespace mcp2221native {
 		v8::Isolate* isolate = args.GetIsolate();
 		long ret;
 
-		if( args.Length() != 1 || !args[0]->IsNumber())
+		if( args.Length() != 0)
 		{
 			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_initialize")));
 			return;
 		}
 
-		unsigned char sport = (unsigned char)args[0]->Uint32Value();
-
-		ret = MCP2221_initialize(sport);
+		ret = MCP2221_initialize();
 		if (ret != 0)
 		{
 			isolate->ThrowException(v8::Exception::Error(v8::String::NewFromUtf8(isolate, "MCP2221_initialize")));
@@ -103,7 +101,8 @@ namespace mcp2221native {
 			unsigned char value = (unsigned char)args[0]->Uint32Value();
 			ret = Wire_write_byte(value);
 		}else if( args.Length() == 1 && args[0]->IsString() ){
-			const char *p_str = ToCString(v8::String::Utf8Value(args[0]));
+			v8::String::Utf8Value str(args[0]);
+			const char *p_str = ToCString(str);
 			ret = Wire_write_str(p_str);
 		}else if( args.Length() == 2 && args[0]->IsArray() && args[1]->IsNumber() ){
 			int length = args[1]->Uint32Value();
@@ -265,6 +264,110 @@ namespace mcp2221native {
 		args.GetReturnValue().Set(v8::Number::New(isolate, ret));
 	}
 
+	void mcp2221_GPIO_analogRead(const v8::FunctionCallbackInfo<v8::Value>& args)
+	{
+		v8::Isolate* isolate = args.GetIsolate();
+		long ret;
+
+		if( args.Length() != 1 || !args[0]->IsNumber() )
+		{
+			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_GPIO_analogRead")));
+			return;
+		}
+		
+		unsigned char pin = (unsigned char)args[0]->Uint32Value();
+
+		ret = analogRead(pin);
+
+		args.GetReturnValue().Set(v8::Number::New(isolate, ret));
+	}
+
+	void mcp2221_GPIO_analogWrite(const v8::FunctionCallbackInfo<v8::Value>& args)
+	{
+		v8::Isolate* isolate = args.GetIsolate();
+
+		if( args.Length() != 2 || !args[0]->IsNumber() || !args[1]->IsNumber() )
+		{
+			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_GPIO_analogWrite")));
+			return;
+		}
+		
+		unsigned char pin = (unsigned char)args[0]->Uint32Value();
+		unsigned short value = (unsigned short)args[1]->Uint32Value();
+
+		analogWrite(pin, value);
+
+		args.GetReturnValue().Set(v8::Number::New(isolate, 0));
+	}
+
+	void mcp2221_GPIO_analogReference(const v8::FunctionCallbackInfo<v8::Value>& args)
+	{
+		v8::Isolate* isolate = args.GetIsolate();
+
+		if( args.Length() != 1 || !args[0]->IsNumber() )
+		{
+			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_GPIO_analogReference")));
+			return;
+		}
+		
+		unsigned char type = (unsigned char)args[0]->Uint32Value();
+
+		analogReference(type);
+
+		args.GetReturnValue().Set(v8::Number::New(isolate, 0));
+	}
+	
+	void mcp2221_GPIO_analogReadResolution(const v8::FunctionCallbackInfo<v8::Value>& args)
+	{
+		v8::Isolate* isolate = args.GetIsolate();
+
+		if( args.Length() != 1 || !args[0]->IsNumber() )
+		{
+			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_GPIO_analogReadResolution")));
+			return;
+		}
+		
+		unsigned char bits = (unsigned char)args[0]->Uint32Value();
+
+		analogReadResolution(bits);
+
+		args.GetReturnValue().Set(v8::Number::New(isolate, 0));
+	}
+
+	void mcp2221_GPIO_analogWriteResolution(const v8::FunctionCallbackInfo<v8::Value>& args)
+	{
+		v8::Isolate* isolate = args.GetIsolate();
+
+		if( args.Length() != 1 || !args[0]->IsNumber() )
+		{
+			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_GPIO_analogWriteResolution")));
+			return;
+		}
+		
+		unsigned char bits = (unsigned char)args[0]->Uint32Value();
+
+		analogWriteResolution(bits);
+
+		args.GetReturnValue().Set(v8::Number::New(isolate, 0));
+	}
+	
+	void mcp2221_Serial_initialize(const v8::FunctionCallbackInfo<v8::Value>& args)
+	{
+		v8::Isolate* isolate = args.GetIsolate();
+
+		if( args.Length() != 1 || !args[0]->IsNumber() )
+		{
+			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_Serial_initialize")));
+			return;
+		}
+		
+		unsigned char sport = (unsigned char)args[0]->Uint32Value();
+
+		Serial_initialize(sport);
+
+		args.GetReturnValue().Set(v8::Number::New(isolate, 0));
+	}
+
 	void mcp2221_Serial_begin(const v8::FunctionCallbackInfo<v8::Value>& args)
 	{
 		v8::Isolate* isolate = args.GetIsolate();
@@ -382,7 +485,8 @@ namespace mcp2221native {
 			unsigned char value = (unsigned char)args[0]->Uint32Value();
 			ret = Serial_write_byte(value);
 		}else if( args.Length() == 1 && args[0]->IsString() ){
-			const char *p_str = ToCString(v8::String::Utf8Value(args[0]));
+			v8::String::Utf8Value str(args[0]);
+			const char *p_str = ToCString(str);
 			ret = Serial_write_str(p_str);
 		}else if( args.Length() == 2 && args[0]->IsArray() && args[1]->IsNumber() ){
 			int length = args[1]->Uint32Value();
@@ -414,7 +518,8 @@ namespace mcp2221native {
 			return;
 		}
 		
-		const char *p_str = ToCString(v8::String::Utf8Value(args[0]));
+		v8::String::Utf8Value str(args[0]);
+		const char *p_str = ToCString(str);
 
 		ret = Serial_print(p_str);
 
@@ -431,8 +536,9 @@ namespace mcp2221native {
 			isolate->ThrowException(v8::Exception::TypeError(v8::String::NewFromUtf8(isolate, "mcp2221_Serial_println")));
 			return;
 		}
-		
-		const char *p_str = ToCString(v8::String::Utf8Value(args[0]));
+
+		v8::String::Utf8Value str(args[0]);
+		const char *p_str = ToCString(str);
 
 		ret = Serial_println(p_str);
 
@@ -456,7 +562,13 @@ namespace mcp2221native {
 		NODE_SET_METHOD(exports, "GPIO_pinMode", mcp2221_GPIO_pinMode);
 		NODE_SET_METHOD(exports, "GPIO_digitalWrite", mcp2221_GPIO_digitalWrite);
 		NODE_SET_METHOD(exports, "GPIO_digitalRead", mcp2221_GPIO_digitalRead);
+		NODE_SET_METHOD(exports, "GPIO_analogRead", mcp2221_GPIO_analogRead);
+		NODE_SET_METHOD(exports, "GPIO_analogWrite", mcp2221_GPIO_analogWrite);
+		NODE_SET_METHOD(exports, "GPIO_analogReference", mcp2221_GPIO_analogReference);
+		NODE_SET_METHOD(exports, "GPIO_analogReadResolution", mcp2221_GPIO_analogReadResolution);
+		NODE_SET_METHOD(exports, "GPIO_analogWriteResolution", mcp2221_GPIO_analogWriteResolution);
 
+		NODE_SET_METHOD(exports, "Serial_initialize", mcp2221_Serial_initialize);
 		NODE_SET_METHOD(exports, "Serial_begin", mcp2221_Serial_begin);
 		NODE_SET_METHOD(exports, "Serial_end", mcp2221_Serial_end);
 		NODE_SET_METHOD(exports, "Serial_available", mcp2221_Serial_available);

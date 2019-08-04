@@ -14,10 +14,10 @@
 #include <termios.h>
 #include <string.h>
 
-static unsigned char serial_port = 0;
 static mcp2221_t* myDev;
+mcp2221_gpioconfset_t gpioConf;
 
-long MCP2221_initialize(unsigned char sport){
+long MCP2221_initialize(void){
 	mcp2221_init();
 	int count = mcp2221_find(MCP2221_DEFAULT_VID, MCP2221_DEFAULT_PID, NULL, NULL, NULL);
 	if( count < 1 )
@@ -27,8 +27,8 @@ long MCP2221_initialize(unsigned char sport){
 	if(!myDev)
 		return -1;
 
-	serial_port = sport;
-	
+	gpioConf = mcp2221_GPIOConfInit();
+
 	return 0;
 }
 
@@ -144,10 +144,7 @@ unsigned char Wire_read(void){
 	return temp;
 }
 
-mcp2221_gpioconfset_t gpioConf;
-
 long GPIO_initialize(void){
-	gpioConf = mcp2221_GPIOConfInit();
 	return 0;
 }
 
@@ -192,6 +189,88 @@ void digitalWrite(unsigned char pin, unsigned char value){
 		printf("mcp2221_setGPIO error\n");
 }
 
+/* 0: invalid, 1: ADC, 2: DAC */
+static int analog_initialized[MCP2221_GPIO_COUNT] = { 0 };
+
+static long pinMode_analog(unsigned char pin, unsigned char mode){
+	if( mode == INPUT ){
+		if( analog_initialized[pin] == 1 )
+			return 0;
+		
+		if( pin != 1 && pin != 2 && pin != 3 )
+			return -1;
+
+		gpioConf.conf[pin].gpios = GPIO_num2pin(pin);
+		gpioConf.conf[pin].mode = MCP2221_GPIO_MODE_ALT1;
+	}else{
+		if( analog_initialized[pin] == 2 )
+			return 0;
+		
+		if( pin != 2 && pin != 3 )
+			return -1;
+
+		gpioConf.conf[pin].gpios = GPIO_num2pin(pin);
+		gpioConf.conf[pin].mode = MCP2221_GPIO_MODE_ALT2;
+	}
+	
+
+	mcp2221_setGPIOConf(myDev, &gpioConf);
+//	mcp2221_saveGPIOConf(myDev, &gpioConf);
+
+	if( mode == INPUT ){
+		analog_initialized[pin] = 1;
+		mcp2221_setADC(myDev, MCP2221_ADC_REF_VDD);
+	}else{
+		analog_initialized[pin] = 2;
+	}
+	
+	return 0;
+}
+
+static unsigned char read_resolution = 10;
+static unsigned char write_resolution = 8;
+
+unsigned short analogRead(unsigned char pin){
+	long ret;
+	
+	ret = pinMode_analog(pin, INPUT);
+	if( ret != 0 )
+		return 0;
+	
+	int adc[MCP2221_ADC_COUNT];
+	mcp2221_error res;
+	res = mcp2221_readADC(myDev, adc);
+	if(res != MCP2221_SUCCESS)
+		printf("mcp2221_readADC error\n");
+	
+	return adc[pin - 1] << (read_resolution - 10);
+}
+
+void analogWrite(unsigned char pin, unsigned short value){
+	long ret;
+	
+	ret = pinMode_analog(pin, OUTPUT);
+	if( ret != 0 )
+		return;
+
+	mcp2221_error res;
+	res = mcp2221_setDAC(myDev, MCP2221_DAC_REF_VDD , value >> (3 + (write_resolution - 8)));
+	if(res != MCP2221_SUCCESS)
+		printf("mcp2221_setDAC error\n");
+}
+
+void analogReference(unsigned char type){
+	if( type != DEFAULT )
+		printf("type only DEFAULT" );
+}
+
+void analogReadResolution(unsigned char bits){
+	read_resolution = bits;
+}
+
+void analogWriteResolution(unsigned char bits){
+	write_resolution = bits;
+}
 
 unsigned char digitalRead(unsigned char pin){
 	mcp2221_gpio_value_t values[MCP2221_GPIO_COUNT];
@@ -204,7 +283,12 @@ unsigned char digitalRead(unsigned char pin){
 	return (values[pin] == 0 ) ? LOW : HIGH;
 }
 
+static unsigned char serial_port = 0;
 static int g_fd = -1;
+
+void Serial_initialize(unsigned char sport){
+	serial_port = sport;
+}
 
 long Serial_begin(unsigned long speed){
 	char port_name[14];
@@ -310,10 +394,10 @@ void Serial_flush(void){
 	serial_ptr = 0;
 }
 
-int Serial_write_array(const unsigned char *p_str, int len){
+int Serial_write_array(const unsigned char *p_data, int len){
 	ssize_t wrote;
-	
-	wrote = write(g_fd, p_str, len );
+
+	wrote = write(g_fd, p_data, len );
 	if( wrote <= 0 )
 		return 0;
 	
